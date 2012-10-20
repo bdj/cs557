@@ -93,6 +93,10 @@ double dot(const Vector& a, const Vector& b) {
   return a.x * b.x + a.y * b.y;
 }
 
+double dotP(Point *a, Point *b) {
+  return a->x * b->x + a->y * b->y + a->w * b->w;
+}
+
 Vector norm(Vector v) {
   double len = sqrt(lengthSq(v));
   v.x /= len;
@@ -312,6 +316,95 @@ Curve *rootsToBernstein(double *roots, int n) {
     c = addRoot(c, roots[i]);
   }
   return c;
+}
+
+Point *cross(Point *p0, Point *p1) {
+  return new Point(
+      p0->y * p1->w - p0->w * p1->y,
+      p0->w * p1->x - p0->x * p1->w,
+      p0->x * p1->y - p0->y * p1->x);
+}
+
+Point *unweight(Point *p) {
+  return new Point(p->x / p->w, p->y / p->w, 1);
+}
+
+bool sameSign(double a, double b) {
+  return (a > 0 && b > 0) || (a < 0 && b < 0);
+}
+
+double nearestHullIntersect(Curve *c) {
+  double min_x = INFINITY;
+  Point A(0, 1, 0);
+
+  for (int i = 0; i <= c->degree; i++) {
+    if (!sameSign(c->points[0]->y, c->points[i]->y))
+      min_x = min(min_x, unweight(cross(cross(c->points[0], c->points[i]), &A))->x);
+  }
+  return min_x;
+}
+
+Curve *findRoot(Curve *c) {
+  Point *p;
+  do {
+    p = c->points[0];
+    c = rightCurve(deCasteljau(c, (nearestHullIntersect(c) - p->x) / (1 - p->x)), c->degree) ;
+  } while (fabs(p->x - c->points[0]->x) > 1e-20 && sameSign(p->y, c->points[0]->y));
+
+  return c;
+}
+
+Curve *deflate(Curve *c) {
+  int n = c->degree;
+  double r = c->points[0]->x;
+  Curve *deflated = new Curve(n - 1);
+  for (int i = 0; i < n; i++) {
+    deflated->points[i] = new Point(i * (1 - r) / (n - 1) + r, n * c->points[i + 1]->y / (i + 1), 1);
+  }
+  return deflated;
+}
+
+double *findRoots(Curve *c) {
+  double *roots = new double[c->degree];
+  int n = c->degree;
+  for (int i = 0; i < n; i++) {
+    c = findRoot(c);
+    roots[i] = c->points[0]->x;
+    c = deflate(c);
+  }
+  return roots;
+}
+
+void fprintCurve(FILE *out, Curve *c) {
+  fprintf(out, "<");
+  for (int i = 0; i <= c->degree; i++) {
+    if (i) fprintf (out, ", ");
+    fprintPoint(out, c->points[i]);
+  }
+  fprintf(out, ">\n");
+}
+void fprintPoint(FILE *out, Point *p) {
+    fprintf(out, "(%.2lf, %.2lf, %.2lf)", p->x, p->y, p->w);
+}
+
+void intersectCurveWithLine(Curve *c, Curve *l, double **paramValues, Point ***points) {
+  Point *L = cross(l->points[0], l->points[1]);
+  Curve *proj = new Curve(c->degree);
+  for (int i = 0; i <= c->degree; i++) {
+    proj->points[i] = new Point((double)i / c->degree, dotP(c->points[i], L), 1);
+  }
+
+  *paramValues = findRoots(proj);
+
+  *points = new Point*[c->degree];
+
+  for (int i = 0; i < c->degree; i++) {
+    if (!isnan((*paramValues)[i])) {
+      (*points)[i] = unweight(rightCurve(deCasteljau(c, (*paramValues)[i]), c->degree)->points[0]); 
+    } else {
+      (*points)[i] = NULL;
+    }
+  }
 }
 
 

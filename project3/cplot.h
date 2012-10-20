@@ -57,6 +57,16 @@ int nck(int, int);
 Curve *explicitBezier(int, double *);
 Curve *addRoot(Curve *, double);
 Curve *rootsToBernstein(double *, int);
+Point *cross(Point *p0, Point *p1);
+Point *unweight(Point *p);
+bool sameSign(double a, double b);
+double nearestHullIntersect(Curve *c);
+Curve *findRoot(Curve *c);
+Curve *deflate(Curve *c);
+double *findRoots(Curve *c);
+void fprintCurve(FILE *, Curve *c);
+void fprintPoint(FILE *, Point *);
+void intersectCurveWithLine(Curve *c, Curve *l, double **paramValues, Point ***points);
 
 extern FILE *in, *ps;
 

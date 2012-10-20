@@ -1,6 +1,6 @@
 #include "cplot.h"
 
-FILE *in, *ps;
+FILE *in, *ps, *out;
 
 int main(int argc, char *argv[]){
 
@@ -18,12 +18,14 @@ int main(int argc, char *argv[]){
     initps("output.eps");
   }
   else initps(argv[2]);
+  out = fopen("output.txt", "w");	
 
   for (;;){ // Process input lines
     if (fscanf(in, "%s", line) == EOF){
       printf("EOF reached.\n");	
       fclose(in);	
       fclose(ps);	
+      fclose(out);
       return 0;
     }
     line[4] = 0;	// Ignore everying past 4th character
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]){
     // Exit the program; close files.
     else if (!strcmp(line, "exit")){
       printf("File processed successfully!\n");
-      fclose(in);	fclose(ps);  return 0; 
+      fclose(in);	fclose(ps);  fclose(out); return 0; 
     }
     //Store Bezier							
     else if (!strcmp(line, "stor")){
@@ -181,9 +183,57 @@ int main(int argc, char *argv[]){
         fscanf(in, "%lf", &fs[i]);
       }
       curves[ncurve] = rootsToBernstein(fs, n);
-      circle(0.136364, 0, .01);
-      circle(0.212234, 0, .01);
-      circle(0.240402, 0, .01);
+    }
+    // Find real roots of explicit polynomial in ncurve
+    else if (!strcmp(line, "root")) {
+      int ncurve;
+      fscanf(in, "%d", &ncurve);
+      double *roots = findRoots(curves[ncurve]);
+
+      fprintf(out, "Curve %d: <", ncurve);
+
+      for (int i = 0; i <= curves[ncurve]->degree; i++) {
+	if (i) fprintf(out, ", ");
+	fprintf(out, "%lf", curves[ncurve]->points[i]->y);
+      }
+
+      fprintf(out, ">\nRoots: [");
+
+      for (int i = 0; i < curves[ncurve]->degree; i++) {
+	if (!isnan(roots[i])) {
+	  if (i) fprintf(out, ", ");
+	  fprintf(out, "%lf", roots[i]);
+	}
+      }
+
+      fprintf(out, "]\n\n");
+    }
+    else if (!strcmp(line, "intl")) {
+      int ncurve, mcurve;
+      fscanf(in, "%d %d", &ncurve, &mcurve);
+      double *paramValues;
+      Point **points;
+      intersectCurveWithLine(curves[ncurve], curves[mcurve], &paramValues, &points);
+      
+      fprintf(out, "Intersection of Curve %d and Line %d: \n", ncurve, mcurve);
+      fprintf(out, "Parameter Values: [");
+      for (int i = 0; i < curves[ncurve]->degree; i++) {
+	if (!isnan(paramValues[i])) {
+	  if (i) fprintf(out, ", ");
+	  fprintf(out, "%lf", paramValues[i]);
+	}
+      }
+
+      fprintf(out, "]\nCoordinates: ");
+      for (int i = 0; i < curves[ncurve]->degree; i++) {
+	if (points[i]) {
+	  if (i) fprintf(out, ", ");
+	  fprintf(out, "(%lf, %lf)", points[i]->x, points[i]->y);
+	  circle(points[i]->x, points[i]->y, 0.1);
+	}
+      }
+
+
 
     }
     else{ 
