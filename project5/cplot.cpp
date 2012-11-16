@@ -601,7 +601,7 @@ void intersectCurves(Curve *p, Curve *q, double **paramValues, Point ***points) 
 
   for (int i = 0; i < c->degree; i++) {
     if (!isnan((*paramValues)[i])) {
-      (*points)[i] = unweight(rightCurve(deCasteljau(p, (*paramValues)[i]), p->degree)->points[0]); 
+      (*points)[i] = unweight(rightCurve(deCasteljau(q, (*paramValues)[i]), q->degree)->points[0]); 
     } else {
       (*points)[i] = NULL;
     }
