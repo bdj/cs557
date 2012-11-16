@@ -234,9 +234,33 @@ int main(int argc, char *argv[]){
 	  circle(points[i]->x, points[i]->y, 0.1);
 	}
       }
+    } 
+    else if (!strcmp(line, "inte")) {
+      int n1, n2;
+      fscanf(in, "%d %d", &n1, &n2);
+      double *paramValues;
+      Point **points;
+      intersectCurves(curves[n1], curves[n2], &paramValues, &points);
+      int n = 3 * curves[n2]->degree;
+      
+      fprintf(out, "Intersection of Curve %d and Curve %d: \n", n1, n2);
+      fprintf(out, "Parameter Values: [");
+      for (int i = 0; i < n; i++) {
+	if (!isnan(paramValues[i])) {
+	  if (i) fprintf(out, ", ");
+	  fprintf(out, "%lf", paramValues[i]);
+	}
+      }
 
-
-
+      fprintf(out, "]\nCoordinates: ");
+      for (int i = 0; i < n; i++) {
+	if (points[i]) {
+	  if (i) fprintf(out, ", ");
+	  fprintf(out, "(%lf, %lf)", points[i]->x, points[i]->y);
+	  circle(points[i]->x, points[i]->y, 0.1);
+	}
+      }
+      fprintf(out, "\n");
     } 
     else if (!strcmp(line, "stcn")) {
       int n, m;

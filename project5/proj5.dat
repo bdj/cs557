@@ -1,0 +1,78 @@
+STOR
+1
+3
+0 0 1
+0 1 1
+1 0 1
+1 1 1
+STOR
+2
+1
+0 0 1
+1 1 1
+VIEW
+0 .5 .5 1
+WIND
+-.3 -.3 1.3 1.3
+CPLOT
+1
+CPLOT
+2
+INTE
+1 2
+STOR
+1
+3
+0 0 1
+1 9 1
+2 -6 1
+3 3 1
+STOR
+2
+3
+0 0 1
+9 1 1
+-6 2 1
+3 3 1
+VIEW
+.5 .5 1 1
+WIND
+-.2 -.2 3.2 3.2
+CPLOT
+1
+CPLOT
+2
+INTE
+1 2
+VIEW
+0 0 .5 .5
+CPLOT
+2
+CPLOT
+1
+INTE
+2 1
+STOR
+1
+3
+0 0 1
+1.3 0 20
+0 1.3 20
+0 0 1
+STOR
+2
+2
+1 0 1
+1 1 1
+0 1 2
+VIEW
+.5 0 1 .5
+WIND
+-.2 -.2 1.4 1.4
+CPLOT
+1
+CPLOT
+2
+INTE
+1 2
+EXIT

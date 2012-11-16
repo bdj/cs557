@@ -49,6 +49,13 @@ class Curvature {
      Curvature(double,double,Vector,Vector);
 };
 
+class Polynomial {
+  public:
+    int degree;
+    double *coefficients;
+    Polynomial(int);
+};
+
 Curve* readCurve();
 NURBS* readNURBS(int);
 void plotBezier(Curve*);
@@ -79,6 +86,13 @@ void fprintPoint(FILE *, Point *);
 void intersectCurveWithLine(Curve *c, Curve *l, double **paramValues, Point ***points);
 NURBS *insertKnot(NURBS *, double);
 Curve *extractCurve(NURBS *, int);
+Point *lij(int, int, Curve *);
+Polynomial *Lij(int, int, Curve *, Curve *);
+Polynomial *Lc(Curve *, Curve *);
+Polynomial operator*(Polynomial lhs, const Polynomial& rhs);
+Polynomial *gt(Curve *, Curve *);
+Curve *polynomialToExplicit(Polynomial *);
+void intersectCurves(Curve *p, Curve *q, double **paramValues, Point ***points);
 
 extern FILE *in, *ps;
 

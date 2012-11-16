@@ -13,6 +13,15 @@ void printCurve(Curve *c) {
   printf(">\n");
 }
 
+void printPolynomial(Polynomial *p) {
+  printf("<");
+  for (int i = 0; i <= p->degree; i++) {
+    if (i) printf (", ");
+    printf("%.2lf", p->coefficients[i]);
+  }
+  printf(">\n");
+}
+
 int main(int argc, char **argv) {
   Curve *c = new Curve(1);
   c->points[0] = new Point(0, -1, 1);
@@ -88,6 +97,50 @@ int main(int argc, char **argv) {
     printPoint(m->points[i]);
   }
   printf(">\n");
+
+
+  Curve *c_imp = new Curve(3);
+  c_imp->points[0] = new Point(0, 0, 1);
+  c_imp->points[1] = new Point(0, 1, 1);
+  c_imp->points[2] = new Point(1, 0, 1);
+  c_imp->points[3] = new Point(1, 1, 1);
+
+
+  Curve *c_imp2 = new Curve(1);
+  c_imp2->points[0] = new Point(0, 0, 1);
+  c_imp2->points[1] = new Point(1, 1, 1);
+
+
+
+  Point *l21 = lij(2, 1, c_imp);
+  printPoint(l21);
+  printf("\n");
+
+  Polynomial *L21 = Lij(2, 1, c_imp, c_imp2);
+  printPolynomial(L21);
+
+  Polynomial *L_c = Lc(c_imp, c_imp2);
+  printPolynomial(L_c);
+
+  Polynomial P1(2);
+  P1.coefficients[0] = 1;
+  P1.coefficients[1] = 2;
+  P1.coefficients[2] = 3;
+  Polynomial P2(2);
+  P2.coefficients[0] = 2;
+  P2.coefficients[1] = 3;
+  P2.coefficients[2] = 4;
+
+  printPolynomial(new Polynomial(P1 * P2));
+
+  Polynomial *g_t = gt(c_imp, c_imp2);
+  printPolynomial(g_t);
+
+  double *roots4 = findRoots(polynomialToExplicit(g_t));
+
+  for (int i = 0; i < g_t->degree; i++) {
+    printf("root[%d] = %lf\n", i, roots4[i]);
+  }
 
   return 0;
 }

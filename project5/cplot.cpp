@@ -28,6 +28,36 @@ Point operator*(double lhs, Point rhs) {
   return rhs;
 }
 
+Polynomial operator+(Polynomial lhs, const Polynomial& rhs) {
+  for (int i = 0; i <= lhs.degree; i++) {
+    lhs.coefficients[i] += rhs.coefficients[i];
+  }
+  return lhs;
+}
+
+Polynomial operator-(Polynomial lhs, const Polynomial& rhs) {
+  for (int i = 0; i <= lhs.degree; i++) {
+    lhs.coefficients[i] -= rhs.coefficients[i];
+  }
+  return lhs;
+}
+
+Polynomial operator*(Polynomial lhs, const Polynomial& rhs) {
+  Polynomial result(lhs.degree + rhs.degree);
+  for (int i = 0; i <= lhs.degree; i++) {
+    for (int j = 0; j <= rhs.degree; j++) {
+      result.coefficients[i + j] += nck(lhs.degree, i) * lhs.coefficients[i] * 
+                       nck(rhs.degree, j) * rhs.coefficients[j];
+    }
+  }
+
+  for (int i = 0; i <= result.degree; i++) {
+    result.coefficients[i] /= nck(result.degree, i);
+  }
+
+  return result;
+}
+
 Curve::Curve(int n) {
   degree = n;
   points = new Point*[n+1]; 
@@ -37,6 +67,11 @@ NURBS::NURBS(int n) {
   num_points = n;
   knots = new double[n + 2];
   points = new Point*[n];
+}
+
+Polynomial::Polynomial(int n) {
+  degree = n;
+  coefficients = new double[n + 1];
 }
 
 Vector::Vector() {
@@ -400,9 +435,9 @@ double *findRoots(Curve *c) {
   double *roots = new double[c->degree];
   int n = c->degree;
   for (int i = 0; i < n; i++) {
-    c = findRoot(c);
-    roots[i] = c->points[0]->x;
-    c = deflate(c);
+      c = findRoot(c);
+      roots[i] = c->points[0]->x;
+      c = deflate(c);
   }
   return roots;
 }
@@ -507,7 +542,71 @@ Curve *extractCurve(NURBS *n, int i) {
   return result;
 }
 
+Point *lij(int i, int j, Curve *c) {
+  double scale = nck(3, i) * nck(3, j);
+  return new Point(scale * *cross(c->points[i], c->points[j]));
+}
 
+Polynomial *Lij(int i, int j, Curve *P, Curve *Q) {
+  Point *l_ij = lij(i, j, P);
+  Polynomial *L_ij = new Polynomial(Q->degree);
+  for (int i = 0; i <= Q->degree; i++) {
+    L_ij->coefficients[i] = dotP(l_ij, Q->points[i]);
+  }
+  
+  return L_ij;
+}
+
+Polynomial *Lc(Curve *P, Curve *Q) {
+  Point *l_30 = lij(3, 0, P);
+  Point *l_21 = lij(2, 1, P);
+  Polynomial *L_c = new Polynomial(Q->degree);
+  for (int i = 0; i <= Q->degree; i++) {
+    L_c->coefficients[i] = (l_30->x + l_21->x) * Q->points[i]->x + 
+                           (l_30->y + l_21->y) * Q->points[i]->y + 
+                           (l_30->w + l_21->w) * Q->points[i]->w;
+  }
+
+  return L_c;
+} 
+
+Polynomial *gt(Curve *P, Curve *Q) {
+  Polynomial L_32 = *Lij(3, 2, P, Q);
+  Polynomial L_31 = *Lij(3, 1, P, Q);
+  Polynomial L_30 = *Lij(3, 0, P, Q);
+  Polynomial L_20 = *Lij(2, 0, P, Q);
+  Polynomial L_10 = *Lij(1, 0, P, Q);
+  Polynomial L_c = *Lc(P, Q);
+
+  return new Polynomial(L_32 * (L_c * L_10 - L_20 * L_20) -
+                        L_31 * (L_31 * L_10 - L_30 * L_20) +
+                        L_30 * (L_31 * L_20 - L_30 * L_c));
+}
+
+Curve *polynomialToExplicit(Polynomial *p) {
+  int n = p->degree;
+  Curve *result = new Curve(n);
+  for (int i = 0; i <= n; i++) {
+    result->points[i] = new Point((double)i / n, p->coefficients[i], 1);
+  }
+  return result;
+}
+
+void intersectCurves(Curve *p, Curve *q, double **paramValues, Point ***points) {
+
+  Curve *c = polynomialToExplicit(gt(p, q));
+  *paramValues = findRoots(c);
+
+  *points = new Point*[c->degree];
+
+  for (int i = 0; i < c->degree; i++) {
+    if (!isnan((*paramValues)[i])) {
+      (*points)[i] = unweight(rightCurve(deCasteljau(p, (*paramValues)[i]), p->degree)->points[0]); 
+    } else {
+      (*points)[i] = NULL;
+    }
+  }
+}
 
 void initps(const char *psfile){  //Initialize the PostScript file	
   printf("In initps: %s\n",psfile);	
